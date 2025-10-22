@@ -1,7 +1,10 @@
 import sys
 
 from lexer.lexer import Lexer
+from parser.parser import Parser
 from errors.errors import Error
+from expr.expr import Expr
+from ast_printer import AstPrinter
 
 def run_file(path: str):
     try:
@@ -24,11 +27,12 @@ def run_prompt():
 
 def run(source: str):
     """Tokenizes, Parses & Interprets source code"""
-    lex = Lexer(source)
+    lex: Lexer = Lexer(source)
     lex.lex_tokens()
+    parser: Parser = Parser(lex.tokens)
+    expression: Expr = parser.parse()
 
-    # for now we will print each token of the input
-    for token in lex.tokens:
-        print(token)
+    if Error.had_error: return
 
+    print(AstPrinter(expression))
 
