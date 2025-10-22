@@ -4,7 +4,7 @@ from pathlib import Path
 parent_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(parent_dir))
 
-from interpreter.saga import run_file, run_prompt
+from saga import run_file, run_prompt
 
 if __name__ == "__main__":
     args = sys.argv
