@@ -34,6 +34,16 @@ class Literal(Expr):
   def accept(self, visitor: "Visitor"):
       return visitor.visit_literal(self)
 
+class Ternary(Expr):
+  def __init__(self, condition: Expr, then_branch: Expr, else_branch: Expr):
+      self.condition = condition
+      self.then_branch = then_branch
+      self.else_branch = else_branch
+
+  @override
+  def accept(self, visitor: "Visitor"):
+      return visitor.visit_ternary(self)
+
 class Unary(Expr):
   def __init__(self, operator: Token, right: Expr):
       self.operator = operator
@@ -52,6 +62,9 @@ class Visitor(ABC):
       pass
   @abstractmethod
   def visit_literal(self, literal: Literal):
+      pass
+  @abstractmethod
+  def visit_ternary(self, ternary: Ternary):
       pass
   @abstractmethod
   def visit_unary(self, unary: Unary):

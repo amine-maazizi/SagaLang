@@ -20,6 +20,7 @@ class TokenType(Enum):
     GREATER = '>'
     EQUAL = '='
     BANG = '!'
+    QUESTION = '?'
 
     # Scope management
     INDENT = "INDENT"

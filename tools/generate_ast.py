@@ -57,5 +57,6 @@ if __name__ == "__main__":
         "Binary     | left: Expr, operator: Token, right: Expr",
         "Grouping   | expression: Expr",
         "Literal    | value: any",
+        "Ternary    | condition: Expr, then_branch: Expr, else_branch: Expr",
         "Unary      | operator: Token, right: Expr"
     ])

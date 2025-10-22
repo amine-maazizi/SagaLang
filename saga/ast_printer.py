@@ -1,6 +1,6 @@
 from typing import override
 
-from expr.expr import Visitor, Expr, Binary, Grouping, Unary, Literal 
+from expr.expr import Visitor, Expr, Binary, Grouping, Unary, Literal, Ternary
 from lexer.token import Token
 from lexer.token_type import TokenType
 
@@ -26,6 +26,10 @@ class AstPrinter(Visitor):
         if expr.value == None: return "nil"
         return str(expr.value)
     
+    @override
+    def visit_ternary(self, expr: Ternary):
+        return self.parenthesize("?:", expr.condition, expr.then_branch, expr.else_branch)
+
     @override
     def visit_unary(self, expr: Unary):
         return self.parenthesize(expr.operator.lexeme, expr.right)

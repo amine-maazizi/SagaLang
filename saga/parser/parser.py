@@ -1,6 +1,6 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
-from expr.expr import Expr, Binary, Unary, Literal, Grouping
+from expr.expr import Expr, Binary, Unary, Literal, Grouping, Ternary 
 from errors.errors import Error, ParseError
 
 class Parser:
@@ -15,19 +15,46 @@ class Parser:
             return None
 
     def expression(self):
-        return self.equality()
+        return self.comma()
     
+    def comma(self):
+        expr: Expr = self.ternary()
+
+        while self.match(TokenType.COMMA):
+            operator: Token = self.previous()
+            right: Expr = self.tenary()
+            expr = Binary(expr, operator, right)
+        
+        return expr
+
+    def ternary(self):
+        expr: Expr = self.equality()
+
+        if self.match(TokenType.QUESTION):
+            # recursivly parse the 'then' branch 
+            then_branch: Expr = self.ternary()
+            
+            # Consume the colon
+            self.consume(TokenType.COLON, "Expected ':' after then branch of ternary expression.")
+            
+            # recursivly parse the 'else' branch 
+            else_branch: Expr = self.ternary()
+            
+            expr = Ternary(expr, then_branch, else_branch)
+        
+        return expr
+
     def equality(self):
-        expr: Expr = self.comparaison()
+        expr: Expr = self.comparison()
 
         while (self.match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)):
             operator: Token = self.previous()
-            right: Expr = self.comparaison()
+            right: Expr = self.comparison()
             expr = Binary(expr, operator, right)
         
         return expr
     
-    def comparaison(self):
+    def comparison(self):
         expr: Expr = self.term()
 
         while (self.match(
@@ -115,7 +142,7 @@ class Parser:
         return self.previous()
 
     def previous(self) -> Token:
-        if self.current > 1:
+        if self.current > 0:
             return self.tokens[self.current - 1]
     
     def consume(self, type: TokenType, message: str):

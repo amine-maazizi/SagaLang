@@ -118,6 +118,8 @@ class Lexer:
                     self.add_token(TokenType.BANG_EQUAL)
                 else:
                     self.add_token(TokenType.BANG)
+            case '?':
+                self.add_token(TokenType.QUESTION)
             case '\t' | '\r' | ' ':
                 pass  # Ignore whitespace
             case '\n':
