@@ -12,17 +12,24 @@ class Parser:
         try:
             return self.expression()
         except ParseError as error:
+            self.synchronize()
             return None
 
     def expression(self):
         return self.comma()
     
     def comma(self):
+        if self.match(TokenType.COMMA):
+            operator: Token = self.previous()
+            self.error(operator, "Binary operator ',' cannot appear at the beginning of an expression.")
+            self.ternary() 
+            raise ParseError()
+
         expr: Expr = self.ternary()
 
         while self.match(TokenType.COMMA):
             operator: Token = self.previous()
-            right: Expr = self.tenary()
+            right: Expr = self.ternary()
             expr = Binary(expr, operator, right)
         
         return expr
@@ -45,6 +52,12 @@ class Parser:
         return expr
 
     def equality(self):
+        if self.match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL):
+            operator: Token = self.previous()
+            self.error(operator, f"Binary operator '{operator.lexeme}' cannot appear at the beginning of an expression.")
+            self.comparison()  
+            raise ParseError()
+
         expr: Expr = self.comparison()
 
         while (self.match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)):
@@ -55,6 +68,13 @@ class Parser:
         return expr
     
     def comparison(self):
+        if self.match(TokenType.GREATER, TokenType.GREATER_EQUAL,
+             TokenType.LESS, TokenType.LESS_EQUAL):
+            operator: Token = self.previous()
+            self.error(operator, f"Binary operator '{operator.lexeme}' cannot appear at the beginning of an expression.")
+            self.term()  
+            raise ParseError()
+
         expr: Expr = self.term()
 
         while (self.match(
@@ -68,6 +88,12 @@ class Parser:
         return expr
     
     def term(self):
+        if self.match(TokenType.PLUS):
+            operator: Token = self.previous()
+            self.error(operator, f"Binary operator '{operator.lexeme}' cannot appear at the beginning of an expression.")
+            self.factor()  
+            raise ParseError()
+
         expr: Expr = self.factor()
 
         while (self.match(
@@ -80,6 +106,12 @@ class Parser:
         return expr
     
     def factor(self):
+        if self.match(TokenType.STAR, TokenType.SLASH):
+            operator: Token = self.previous()
+            self.error(operator, f"Binary operator '{operator.lexeme}' cannot appear at the beginning of an expression.")
+            self.unary()  # Parse and discard right operand
+            raise ParseError()
+
         expr: Expr = self.unary()
 
         while (self.match(
