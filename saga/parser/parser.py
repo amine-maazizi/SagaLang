@@ -1,6 +1,7 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
-from expr.expr import Expr, Binary, Unary, Literal, Grouping, Ternary 
+from expr.expr import Expr, Binary, Unary, Literal, Grouping, Ternary
+from stmt.stmt import Stmt, Expression, Say
 from errors.errors import Error, ParseError
 
 class Parser:
@@ -9,11 +10,25 @@ class Parser:
         self.current = 0
     
     def parse(self) -> Expr:
-        try:
-            return self.expression()
-        except ParseError as error:
-            self.synchronize()
-            return None
+        statements = []
+        while not self.is_at_end():
+            statements.append(self.statement())
+        
+        return statements
+    
+    def statement(self) -> Stmt:
+        if self.match(TokenType.SAY): return self.say_statement()
+        return self.expression_statement()
+    
+    def say_statement(self):
+        value: Expr = self.expression()
+        self.consume("Expected newline or EOF after value.", TokenType.NEWLINE, TokenType.EOF)
+        return Say(value)
+
+    def expression_statement(self):
+        expr: Expr = self.expression()
+        self.consume("Expected newline or EOF after value.", TokenType.NEWLINE, TokenType.EOF)
+        return Expression(expr)
 
     def expression(self):
         return self.comma()
@@ -42,7 +57,7 @@ class Parser:
             then_branch: Expr = self.ternary()
             
             # Consume the colon
-            self.consume(TokenType.COLON, "Expected ':' after then branch of ternary expression.")
+            self.consume("Expected ':' after then branch of ternary expression.", TokenType.COLON)
             
             # recursivly parse the 'else' branch 
             else_branch: Expr = self.ternary()
@@ -142,7 +157,7 @@ class Parser:
         
         if self.match(TokenType.LEFT_PAREN):
             expr: Expr = self.expression()
-            self.consume(TokenType.RIGHT_PAREN, "Expected ')' after expression.")
+            self.consume("Expected ')' after expression.", TokenType.RIGHT_PAREN)
             return Grouping(expr)
     
         raise self.error(self.peek(), "Expected expression.")
@@ -177,9 +192,9 @@ class Parser:
         if self.current > 0:
             return self.tokens[self.current - 1]
     
-    def consume(self, type: TokenType, message: str):
+    def consume(self,  message: str, *types: TokenType):
         """Looks for the a token of the suggested type else it yields an error"""
-        if self.check(type): return self.advance()
+        if self.peek().type in types: return self.advance()
         raise self.error(self.peek(), message)
     
     def error(self, token: Token, message: str) -> ParseError:

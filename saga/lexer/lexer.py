@@ -48,6 +48,8 @@ class Lexer:
             line=self.line,
             column=self.column
         ))
+
+        return self.tokens
     
     def is_at_end(self) -> bool:
         """Checks if the lexer has reached the end of the source file"""
@@ -123,6 +125,7 @@ class Lexer:
             case '\t' | '\r' | ' ':
                 pass  # Ignore whitespace
             case '\n':
+                self.add_token(TokenType.NEWLINE)
                 self.line += 1
                 self.column = 0
                 self.at_line_start = True
