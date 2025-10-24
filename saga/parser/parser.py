@@ -190,8 +190,8 @@ class Parser:
         self.advance()
 
         while not self.is_at_end():
-            # if we reach a dedent, it is likely the end of a block
-            if self.previous().type == TokenType.DEDENT:
+            # if we reach a NEWLINE then it's likely the end of the bad statement
+            if self.previous().type == TokenType.NEWLINE:
                 return
 
             # check if the next token starts a new statement
@@ -208,8 +208,4 @@ class Parser:
             }:
                 return        
 
-            # stop on INDENT or NEWLINE 
-            if self.peek().type == TokenType.INDENT:
-                return
-        
             self.advance()

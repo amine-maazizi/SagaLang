@@ -23,6 +23,7 @@ class TokenType(Enum):
     QUESTION = '?'
 
     # Scope management
+    NEWLINE = "NEWLINE"
     INDENT = "INDENT"
     DEDENT = "DEDENT"
 
