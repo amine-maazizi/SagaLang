@@ -1,0 +1,175 @@
+from typing import override
+
+import expr.expr as expr
+from expr.expr import Expr, Grouping, Binary, Unary, Ternary, Literal
+
+import stmt.stmt as stmt
+from stmt.stmt import Stmt, Expression, Say, Let
+
+from lexer.token_type import TokenType
+from lexer.token import Token
+
+from errors.errors import RuntimeError, Error  
+
+from environment.environment import Environment
+
+# TODO: Handle distinction between floats & integer in SAGA
+
+class Interpreter(expr.Visitor, stmt.Visitor):
+
+    def __init__(self):
+        self.env = Environment()
+
+    def interpret(self, statements: list[Stmt]):
+        try:
+            for stmt in statements:
+                self.execute(stmt)
+        except RuntimeError as error:
+            Error.runtime_error(error)
+
+    def execute(self, statement: Stmt):
+        statement.accept(self)
+
+    def execute_block(self, statements: list[Stmt], environment: Environment):
+        previous: Environment = self.env
+        try:
+            self.env = environment
+
+            for stmt in statements:
+                self.execute(stmt)
+        finally:
+            self.env = previous
+
+    @override
+    def visit_block(self, block):
+        self.execute_block(block.statements, Environment(self.env))
+        return None
+
+    @override
+    def visit_literal(self, literal: Literal):
+        return literal.value
+    
+    @override
+    def visit_grouping(self, grouping: Grouping):
+        return self.evaluate(grouping.expression)
+    
+    @override
+    def visit_unary(self, unary: Unary):
+        right: any = self.evaluate(unary.right)
+
+        match unary.operator.type:
+            case TokenType.MINUS:
+                self.check_number_operand(unary.operator, right)
+                return -right
+            case TokenType.BANG:
+                return not self.is_truthful(right)
+        
+        # unreachable
+        return None
+
+    @override
+    def visit_binary(self, binary: Binary):
+        left: any = self.evaluate(binary.left)
+        right: any = self.evaluate(binary.right)
+
+        match binary.operator.type:
+            case TokenType.COMMA:
+                left_values = left if isinstance(left, tuple) else (left,)
+                right_values = right if isinstance(right, tuple) else (right,)
+                return left_values + right_values
+            case TokenType.BANG_EQUAL:
+                return left != right
+            case TokenType.EQUAL_EQUAL:
+                return left == right
+            case TokenType.GREATER:
+                self.check_number_operands(binary.operator, left, right)
+                return left > right
+            case TokenType.GREATER_EQUAL:
+                self.check_number_operands(binary.operator, left, right)
+                return left >= right
+            case TokenType.LESS:
+                self.check_number_operands(binary.operator, left, right)
+                return left < right
+            case TokenType.LESS_EQUAL:
+                self.check_number_operands(binary.operator, left, right)
+                return left <= right
+            case TokenType.MINUS:
+                self.check_number_operands(binary.operator, left, right)
+                return left - right
+            case TokenType.PLUS:
+                # This operator is special because it can either be
+                # addition or concatenation
+                if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+                    return left + right
+                elif isinstance(left, str) and isinstance(right, str):
+                    return left + right
+                elif (isinstance(left, (int, float)) and isinstance(right, str)) or (isinstance(left, str) and isinstance(right, (int, float))):
+                    return str(left) + str(right)
+                raise RuntimeError(binary.operator, 
+                    "Operands must be two numbers or two strings.")
+            case TokenType.SLASH:
+                self.check_number_operands(binary.operator, left, right)
+                if right != 0:
+                    return left / right
+                raise RuntimeError(binary.operator, "Cannot divide by zero.")
+            case TokenType.STAR:
+                self.check_number_operands(binary.operator, left, right)
+                return left * right
+        
+        # unreachable
+        return None
+    
+    @override
+    def visit_ternary(self, ternary: Ternary):
+        condition: any = self.evaluate(ternary.condition)
+        
+        if self.is_truthful(condition):
+            return self.evaluate(ternary.then_branch)
+        else:
+            return self.evaluate(ternary.else_branch)
+
+    @override
+    def visit_variable(self, variable):
+        return self.env.get(variable.name)
+
+    @override
+    def visit_assign(self, assign):
+        value: any = self.evaluate(assign.value)
+        self.env.assign(assign.name, value)
+        return value
+
+    @override
+    def visit_expression(self, expression):
+        self.evaluate(expression.expression)
+        return None
+    
+    @override
+    def visit_say(self, say: Say):
+        value: any = self.evaluate(say.expression)
+        print(value)
+        return None
+    
+    @override
+    def visit_let(self, let: Let):
+        value: any = None
+        if let.initializer is not None:
+            value = self.evaluate(let.initializer)
+        
+        self.env.define(let.name.lexeme, value)
+        return None
+
+    def evaluate(self, expr: Expr):
+        return expr.accept(self)
+    
+    def is_truthful(self, object: any):
+        if object is None: return False
+        if isinstance(object, bool): return bool(object)
+        return True
+    
+    def check_number_operand(self, operator: Token, operand: any):
+        if isinstance(operand, (int, float)): return
+        raise RuntimeError(operator, "Operand must be a number.")
+    
+    def check_number_operands(self, operator: Token, left: any, right: any):
+        if isinstance(left, (int, float)) and isinstance(right, (int, float)): return
+        raise RuntimeError(operator, "Operands must be numbers.")

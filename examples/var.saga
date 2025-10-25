@@ -1,0 +1,6 @@
+let a = 1
+let b = 2
+say "a + b = " + (a + b)
+say "Assigning to a"
+a = 3
+say "a + b = " + (a + b)

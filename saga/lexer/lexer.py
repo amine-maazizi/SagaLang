@@ -125,7 +125,8 @@ class Lexer:
             case '\t' | '\r' | ' ':
                 pass  # Ignore whitespace
             case '\n':
-                self.add_token(TokenType.NEWLINE)
+                if self.peek_previous() not in ['\n', None]:
+                    self.add_token(TokenType.NEWLINE)
                 self.line += 1
                 self.column = 0
                 self.at_line_start = True
@@ -183,6 +184,11 @@ class Lexer:
         if self.is_at_end():
             return ''
         return self.source[self.current+1]
+
+    def peek_previous(self):
+        """Backwards lookahead"""
+        if self.current > 1:
+            return self.source[self.current-2]
 
     def string(self):
         """Adds a string litteral"""
@@ -251,16 +257,19 @@ class Lexer:
 
     def handle_indentation(self):
         """indents/dedents based on the reached level"""
-        local_indentation_level = 1
+        local_indentation_level = 0
         while self.peek() == ' ' and not self.is_at_end():
             self.advance()
             local_indentation_level += 1
 
         local_indentation_level = local_indentation_level // 4
-    
+
         if local_indentation_level > self.indentation_level:
+            # Only indent by one level at a time
             self.indentation_level = local_indentation_level
             self.add_token(TokenType.INDENT)
         elif local_indentation_level < self.indentation_level:
-            self.indentation_level = local_indentation_level
-            self.add_token(TokenType.DEDENT)
+            # Need to emit multiple DEDENTs if we jump multiple levels
+            while self.indentation_level > local_indentation_level:
+                self.add_token(TokenType.DEDENT)
+                self.indentation_level -= 1

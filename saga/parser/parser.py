@@ -1,7 +1,7 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
 from expr.expr import Expr, Assign, Binary, Unary, Literal, Grouping, Ternary, Variable
-from stmt.stmt import Stmt, Expression, Say, Let
+from stmt.stmt import Stmt, Block, Expression, Say, Let
 from errors.errors import Error, ParseError
 
 class Parser:
@@ -36,6 +36,8 @@ class Parser:
 
     def statement(self) -> Stmt:
         if self.match(TokenType.SAY): return self.say_statement()
+        if self.match(TokenType.INDENT): return Block(self.block())
+
         return self.expression_statement()
     
     def say_statement(self):
@@ -47,6 +49,20 @@ class Parser:
         expr: Expr = self.expression()
         self.consume("Expected newline or EOF after value.", TokenType.NEWLINE, TokenType.EOF)
         return Expression(expr)
+
+    def block(self):
+        statements: list[Stmt] = []
+
+        while not self.is_at_end():
+            if self.check(TokenType.DEDENT):
+                break
+            statements.append(self.declaration())
+
+        # Only consume DEDENT if we haven't reached EOF
+        if not self.is_at_end():
+            self.consume("Expected dedentation after block.", TokenType.DEDENT)
+        
+        return statements
 
     def assignment(self):
         expr: Expr = self.equality()

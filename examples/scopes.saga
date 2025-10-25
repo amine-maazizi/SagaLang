@@ -1,0 +1,9 @@
+
+let a = "global a"
+
+say a
+
+    let a = "inner a"
+    say a
+
+say a

@@ -1,0 +1,4 @@
+say "Hello World!"
+say true
+say 5 > 10 ? "yes" : "no"
+say 5+2, 5+10/2

@@ -56,18 +56,19 @@ if __name__ == "__main__":
     
     output_dir = args[1]
 
-    define_ast(output_dir, "Expr", [
-        "Assign     | name: Token, value: Expr",
-        "Binary     | left: Expr, operator: Token, right: Expr",
-        "Grouping   | expression: Expr",
-        "Literal    | value: any",
-        "Ternary    | condition: Expr, then_branch: Expr, else_branch: Expr",
-        "Unary      | operator: Token, right: Expr",
-        "Variable   | name: Token"
-    ])
-
-    # define_ast(output_dir, "Stmt", [
-    #     "Expression | expression: Expr",
-    #     "Say        | expression: Expr",
-    #     "Let        | name: Token, initializer: Expr"
+    # define_ast(output_dir, "Expr", [
+    #     "Assign     | name: Token, value: Expr",
+    #     "Binary     | left: Expr, operator: Token, right: Expr",
+    #     "Grouping   | expression: Expr",
+    #     "Literal    | value: any",
+    #     "Ternary    | condition: Expr, then_branch: Expr, else_branch: Expr",
+    #     "Unary      | operator: Token, right: Expr",
+    #     "Variable   | name: Token"
     # ])
+
+    define_ast(output_dir, "Stmt", [
+        "Block      | statements: list[Stmt]",
+        "Expression | expression: Expr",
+        "Say        | expression: Expr",
+        "Let        | name: Token, initializer: Expr"
+    ])
