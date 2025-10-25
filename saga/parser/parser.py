@@ -1,6 +1,6 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
-from expr.expr import Expr, Binary, Unary, Literal, Grouping, Ternary, Variable
+from expr.expr import Expr, Assign, Binary, Unary, Literal, Grouping, Ternary, Variable
 from stmt.stmt import Stmt, Expression, Say, Let
 from errors.errors import Error, ParseError
 
@@ -48,8 +48,23 @@ class Parser:
         self.consume("Expected newline or EOF after value.", TokenType.NEWLINE, TokenType.EOF)
         return Expression(expr)
 
+    def assignment(self):
+        expr: Expr = self.equality()
+
+        if self.match(TokenType.EQUAL):
+            equals: Token = self.previous()
+            value: Expr = self.assignment()
+
+            if isinstance(expr, Variable):
+                name: Token = expr.name
+                return Assign(name, value)
+
+            Error.error(equals, "Invalid assignment target.")
+
+        return expr
+
     def expression(self):
-        return self.comma()
+        return self.assignment()
     
     def comma(self):
         if self.match(TokenType.COMMA):
