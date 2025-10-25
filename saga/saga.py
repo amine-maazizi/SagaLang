@@ -5,7 +5,7 @@ from parser.parser import Parser
 from interpreter.interpreter import Interpreter
 from errors.errors import Error
 from lexer.token import Token
-from stmt.stmt import Stmt
+from stmt.stmt import Stmt, Expression
 
 
 interpreter = Interpreter()
@@ -18,7 +18,7 @@ def run_file(path: str):
         sys.exit()
 
     with f:
-        run(f.read())
+        run(f.read(), is_repl=False)
 
         if Error.had_error:
             sys.exit(65)
@@ -29,12 +29,12 @@ def run_prompt():
     """REPL (Read-Eval-Print Loop) for interactive usage"""
     line = input("SAGA> ")
     while line.strip() != 'q':
-        run(line)
+        run(line, is_repl=True)
         Error.had_error = False
         line = input("SAGA> ")
 
 
-def run(source: str):
+def run(source: str, is_repl: bool = False):
     """Tokenizes, Parses & Interprets source code"""
     lex: Lexer = Lexer(source)
     tokens: list[Token] = lex.lex_tokens()
@@ -43,5 +43,9 @@ def run(source: str):
 
     if Error.had_error: return
 
-    interpreter.interpret(statements)
-
+    if is_repl and len(statements) == 1 and isinstance(statements[0], Expression):
+        value = interpreter.evaluate(statements[0].expression)
+        if value is not None:
+            print(value)
+    else:
+        interpreter.interpret(statements)

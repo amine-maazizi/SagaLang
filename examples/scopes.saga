@@ -1,9 +1,15 @@
 
-let a = "global a"
+// let a = "global a"
 
-say a
+// say a
 
-    let a = "inner a"
-    say a
+//     let a = "inner a"
+//     say a
 
-say a
+// say a
+
+
+let a = 1
+
+  let a = a + 2
+  say a

@@ -13,6 +13,7 @@ class Lexer:
         self.column = 1
         self.indentation_level = 0
         self.at_line_start = False
+        self.line_has_content = False  # Track if current line has significant tokens
 
         self.keywords = {
             "if": TokenType.IF,
@@ -70,72 +71,95 @@ class Lexer:
 
         match c:
             case '(':
+                self.line_has_content = True
                 self.add_token(TokenType.LEFT_PAREN)
             case ')':
+                self.line_has_content = True
                 self.add_token(TokenType.RIGHT_PAREN)
             case '{':
+                self.line_has_content = True
                 self.add_token(TokenType.LEFT_BRACE)
             case '}':
+                self.line_has_content = True
                 self.add_token(TokenType.RIGHT_BRACE)
             case ',':
+                self.line_has_content = True
                 self.add_token(TokenType.COMMA)
             case '.':
+                self.line_has_content = True
                 if self.match('.'):
                     self.add_token(TokenType.RANGE)
                 else:
                     self.add_token(TokenType.DOT)
             case '-':
+                self.line_has_content = True
                 self.add_token(TokenType.MINUS)
             case '+':
+                self.line_has_content = True
                 self.add_token(TokenType.PLUS)
             case '/':
                 if self.match('/'):
+                    # Single-line comment - don't mark as content
                     while self.peek() != '\n' and not self.is_at_end():
                         self.advance()
                 elif self.match('*'):
+                    # Block comment - don't mark as content
                     self.block_comment()
                 else:
+                    self.line_has_content = True
                     self.add_token(TokenType.SLASH)
             case '*':
+                self.line_has_content = True
                 self.add_token(TokenType.STAR)
             case  ':':
+                self.line_has_content = True
                 self.add_token(TokenType.COLON)
             case '<':
+                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.LESS_EQUAL)
                 else:
                     self.add_token(TokenType.LESS)
             case '>':
+                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.GREATER_EQUAL)
                 else:
                     self.add_token(TokenType.GREATER)
             case '=':
+                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.EQUAL_EQUAL)
                 else:
                     self.add_token(TokenType.EQUAL)
             case '!':
+                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.BANG_EQUAL)
                 else:
                     self.add_token(TokenType.BANG)
             case '?':
+                self.line_has_content = True
                 self.add_token(TokenType.QUESTION)
             case '\t' | '\r' | ' ':
                 pass  # Ignore whitespace
             case '\n':
-                if self.peek_previous() not in ['\n', None]:
+                # Only emit NEWLINE if the line had actual content
+                if self.line_has_content:
                     self.add_token(TokenType.NEWLINE)
                 self.line += 1
                 self.column = 0
                 self.at_line_start = True
+                self.line_has_content = False  # Reset for next line
             case '"':
+                self.line_has_content = True
                 self.string()
             case _:
                 if c.isdigit():
+                    self.line_has_content = True
                     self.number()
                 elif c.isalpha():
+                    self.line_has_content = True
                     self.identifier()
                 else:
                     Error.report(self.line, self.column, "Unexpected character")
@@ -181,7 +205,7 @@ class Lexer:
 
     def peek_next(self):
         """A second character lookahead"""
-        if self.is_at_end():
+        if self.current + 1 >= len(self.source):
             return ''
         return self.source[self.current+1]
 
@@ -228,7 +252,7 @@ class Lexer:
     
     def identifier(self):
         """Reads & Adds an identifier keyword"""
-        while self.peek().isalnum():
+        while self.peek().isalnum() or self.peek() == '_':
             self.advance()
         
         text = self.source[self.start:self.current]
@@ -267,9 +291,11 @@ class Lexer:
         if local_indentation_level > self.indentation_level:
             # Only indent by one level at a time
             self.indentation_level = local_indentation_level
+            self.line_has_content = True  # Indentation counts as content
             self.add_token(TokenType.INDENT)
         elif local_indentation_level < self.indentation_level:
             # Need to emit multiple DEDENTs if we jump multiple levels
             while self.indentation_level > local_indentation_level:
+                self.line_has_content = True  # Dedentation counts as content
                 self.add_token(TokenType.DEDENT)
                 self.indentation_level -= 1
