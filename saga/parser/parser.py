@@ -1,7 +1,7 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
-from expr.expr import Expr, Binary, Unary, Literal, Grouping, Ternary
-from stmt.stmt import Stmt, Expression, Say
+from expr.expr import Expr, Binary, Unary, Literal, Grouping, Ternary, Variable
+from stmt.stmt import Stmt, Expression, Say, Let
 from errors.errors import Error, ParseError
 
 class Parser:
@@ -12,10 +12,28 @@ class Parser:
     def parse(self) -> Expr:
         statements = []
         while not self.is_at_end():
-            statements.append(self.statement())
+            statements.append(self.declaration())
         
         return statements
     
+    def declaration(self):
+        try:
+            if self.match(TokenType.LET): return self.var_declaration()
+            return self.statement()
+        except ParseError as error:
+            self.synchronize()
+            return None
+
+    def var_declaration(self):
+        name: Token = self.consume("Expected variable name.", TokenType.IDENTIFIER)
+
+        initializer: Expr = None
+        if self.match(TokenType.EQUAL):
+            initializer = self.expression()
+        
+        self.consume("Expected newline or EOF after value.", TokenType.NEWLINE, TokenType.EOF)
+        return Let(name, initializer)
+
     def statement(self) -> Stmt:
         if self.match(TokenType.SAY): return self.say_statement()
         return self.expression_statement()
@@ -155,6 +173,9 @@ class Parser:
         if self.match(TokenType.INTEGER, TokenType.FLOAT, TokenType.STRING):
             return Literal(self.previous().literal)
         
+        if self.match(TokenType.IDENTIFIER):
+            return Variable(self.previous())
+
         if self.match(TokenType.LEFT_PAREN):
             expr: Expr = self.expression()
             self.consume("Expected ')' after expression.", TokenType.RIGHT_PAREN)

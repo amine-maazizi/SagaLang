@@ -9,6 +9,9 @@ def define_ast(output_dir: str, base_name: str, types: list[str]):
         f.write('from abc import ABC, abstractmethod\n')
         f.write('from typing import override\n\n')
         f.write('from lexer.token import Token\n\n')
+        match base_name:
+            case "Stmt":
+                f.write("from expr.expr import Expr\n\n")
         f.write(f'class {base_name}(ABC):\n')
         f.write(f'  @abstractmethod\n')
         f.write(f'  def accept(self, visitor: "Visitor"):\n')
@@ -53,15 +56,17 @@ if __name__ == "__main__":
     
     output_dir = args[1]
 
-    # define_ast(output_dir, "Expr", [
-    #     "Binary     | left: Expr, operator: Token, right: Expr",
-    #     "Grouping   | expression: Expr",
-    #     "Literal    | value: any",
-    #     "Ternary    | condition: Expr, then_branch: Expr, else_branch: Expr",
-    #     "Unary      | operator: Token, right: Expr"
-    # ])
+    define_ast(output_dir, "Expr", [
+        "Binary     | left: Expr, operator: Token, right: Expr",
+        "Grouping   | expression: Expr",
+        "Literal    | value: any",
+        "Ternary    | condition: Expr, then_branch: Expr, else_branch: Expr",
+        "Unary      | operator: Token, right: Expr",
+        "Variable   | name: Token"
+    ])
 
     define_ast(output_dir, "Stmt", [
         "Expression | expression: Expr",
-        "Say        | expression: Expr"
+        "Say        | expression: Expr",
+        "Let        | name: Token, initializer: Expr"
     ])
