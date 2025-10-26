@@ -22,6 +22,8 @@ class Lexer:
             "or": TokenType.OR,
             "while": TokenType.WHILE,
             "for": TokenType.FOR,
+            "break": TokenType.BREAK,
+            "CONTINUE": TokenType.CONTINUE,
             "return": TokenType.RETURN,
             "fn": TokenType.FN,
             "let": TokenType.LET,

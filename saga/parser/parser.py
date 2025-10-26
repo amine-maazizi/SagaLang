@@ -1,7 +1,7 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
 from expr.expr import Expr, Assign, Binary, Unary, Literal, Grouping, Logical, Ternary, Variable
-from stmt.stmt import Stmt, Block, Expression, Say, Let, If, While
+from stmt.stmt import Stmt, Block, Expression, Say, Let, If, While, Continue, Break
 from errors.errors import Error, ParseError
 
 class Parser:
@@ -39,10 +39,20 @@ class Parser:
         if self.match(TokenType.IF): return self.if_statement()
         if self.match(TokenType.SAY): return self.say_statement()
         if self.match(TokenType.WHILE): return self.while_statement()
+        if self.match(TokenType.BREAK): return self.break_statement()
+        if self.match(TokenType.CONTINUE): return self.continue_statement()
         if self.match(TokenType.INDENT): return Block(self.block())
 
         return self.expression_statement()
     
+    def break_statement(self):
+        self.consume("Expected newline or EOF after 'break'.", TokenType.NEWLINE, TokenType.EOF)
+        return Break()
+
+    def continue_statement(self):
+        self.consume("Expected newline or EOF after 'continue'.", TokenType.NEWLINE, TokenType.EOF)
+        return Continue()
+
     def for_statement(self):
         # for i in 1..10:
         loop_var: Token = self.consume("Expected variable name after 'for'.", TokenType.IDENTIFIER)
@@ -374,11 +384,9 @@ class Parser:
         self.advance()
 
         while not self.is_at_end():
-            # if we reach a NEWLINE then it's likely the end of the bad statement
             if self.previous().type == TokenType.NEWLINE:
                 return
 
-            # check if the next token starts a new statement
             if self.peek().type in {
             TokenType.LET,
             TokenType.FN,
@@ -389,6 +397,8 @@ class Parser:
             TokenType.RETURN,
             TokenType.IMPORT,
             TokenType.SAY,
+            TokenType.BREAK,
+            TokenType.CONTINUE,
             }:
                 return        
 

@@ -62,6 +62,20 @@ class While(Stmt):
   def accept(self, visitor: "Visitor"):
       return visitor.visit_while(self)
 
+class Break(Stmt):
+  def __init__(self):
+      pass
+  @override
+  def accept(self, visitor: "Visitor"):
+      return visitor.visit_break(self)
+
+class Continue(Stmt):
+  def __init__(self):
+      pass
+  @override
+  def accept(self, visitor: "Visitor"):
+      return visitor.visit_continue(self)
+
 class Visitor(ABC):
   @abstractmethod
   def visit_block(self, stmt: Block):
@@ -80,4 +94,10 @@ class Visitor(ABC):
       pass
   @abstractmethod
   def visit_while(self, stmt: While):
+      pass
+  @abstractmethod
+  def visit_break(self, stmt: Break):
+      pass
+  @abstractmethod
+  def visit_continue(self, stmt: Continue):
       pass

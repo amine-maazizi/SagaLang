@@ -62,6 +62,8 @@ class TokenType(Enum):
     FOR = 'for'
     RETURN = 'return'
     IN = 'in'
+    BREAK = 'break'
+    CONTINUE = 'continue'
 
     # boolean literals
     TRUE = 'true'

@@ -18,23 +18,34 @@ def define_ast(output_dir: str, base_name: str, types: list[str]):
         f.write(f'      pass\n\n')
 
         for type in types:
-            class_name = type.split("|")[0].strip()
-            fields =  type.split("|")[1].strip()
+            elements = type.split("|")
+            if len(elements) == 2:
+                class_name = elements[0].strip()
+                fields =  elements[1].strip()
+            else:
+                class_name = elements[0]
+                fields = None
             define_type(f, base_name, class_name, fields)
 
         define_visitor(f,base_name, types)
 
-def define_type(f, base_name: str, class_name: str, field_list: list[str]):
+def define_type(f, base_name: str, class_name: str, field_list: list[str] = None):
     f.write(f'class {class_name}({base_name}):\n')
     
     # constructor
-    f.write(f'  def __init__(self, {field_list}):\n')
+    if field_list:
+        f.write(f'  def __init__(self, {field_list}):\n')
+    else:
+        f.write(f'  def __init__(self):\n')
     
-    fields = field_list.split(',')
-    for field in fields:
-        name = field.split(':')[0].lstrip()
-        f.write(f'      self.{name} = {name}\n')
-    
+    if field_list:
+        fields = field_list.split(',')
+        for field in fields:
+            name = field.split(':')[0].lstrip()
+            f.write(f'      self.{name} = {name}\n')
+    else:
+        f.write(f'      pass')
+
     f.write('\n')
 
     f.write(f'  @override\n')
@@ -73,5 +84,7 @@ if __name__ == "__main__":
         "If         | condition: Expr, then_branch: Stmt, else_branch: Stmt",
         "Say        | expression: Expr",
         "Let        | name: Token, initializer: Expr",
-        "While      | condition: Expr, body: Stmt"
+        "While      | condition: Expr, body: Stmt",
+        "Break",
+        "Continue"
     ])

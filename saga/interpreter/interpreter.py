@@ -4,12 +4,12 @@ import expr.expr as expr
 from expr.expr import Expr, Grouping, Binary, Unary, Ternary, Literal
 
 import stmt.stmt as stmt
-from stmt.stmt import Stmt, Expression, Say, Let, If
+from stmt.stmt import Stmt, Expression, Say, Let, If, Break, Continue
 
 from lexer.token_type import TokenType
 from lexer.token import Token
 
-from errors.errors import RuntimeError, Error  
+from errors.errors import RuntimeError, Error, ContinueException, BreakException
 
 from environment.environment import Environment
 
@@ -156,9 +156,25 @@ class Interpreter(expr.Visitor, stmt.Visitor):
         return None
     
     @override
+    def visit_break(self, stmt: Break):
+        raise BreakException()
+
+    @override
+    def visit_continue(self, stmt: Continue):
+        raise ContinueException()
+    
+    @override
     def visit_while(self, stmt):
-        while self.is_truthful(self.evaluate(stmt.condition)):
-            self.execute(stmt.body)
+        try:
+            while self.is_truthful(self.evaluate(stmt.condition)):
+                try:
+                    self.execute(stmt.body)
+                except ContinueException:
+                    continue  
+                except BreakException:
+                    break 
+        except BreakException:
+            pass  
         return None
 
     @override

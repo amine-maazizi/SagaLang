@@ -31,3 +31,10 @@ class RuntimeError(RuntimeError):
         super().__init__(message)
         self.token = token
         self.message = message
+
+
+class BreakException(Exception):
+    pass
+
+class ContinueException(Exception):
+    pass
