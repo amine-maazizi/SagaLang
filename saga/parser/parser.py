@@ -1,7 +1,7 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
-from expr.expr import Expr, Assign, Binary, Unary, Literal, Grouping, Ternary, Variable
-from stmt.stmt import Stmt, Block, Expression, Say, Let
+from expr.expr import Expr, Assign, Binary, Unary, Literal, Grouping, Logical, Ternary, Variable
+from stmt.stmt import Stmt, Block, Expression, Say, Let, If
 from errors.errors import Error, ParseError
 
 class Parser:
@@ -35,11 +35,29 @@ class Parser:
         return Let(name, initializer)
 
     def statement(self) -> Stmt:
+        if self.match(TokenType.IF): return self.if_statement()
         if self.match(TokenType.SAY): return self.say_statement()
         if self.match(TokenType.INDENT): return Block(self.block())
 
         return self.expression_statement()
     
+    def if_statement(self):
+        condition: Expr = self.expression()
+        self.consume("Expected ':' after condition.", TokenType.COLON)
+        self.consume("Expected newline after ':'.", TokenType.NEWLINE)
+
+        then_branch: Stmt = self.statement()
+        
+        else_branch: Stmt = None
+
+
+        if self.match(TokenType.ELSE):
+            self.consume("Expected ':' after 'else' statement.", TokenType.COLON)
+            self.consume("Expected newline after ':'.", TokenType.NEWLINE)
+            else_branch: Stmt = self.statement()
+
+        return If(condition, then_branch, else_branch)
+
     def say_statement(self):
         value: Expr = self.expression()
         self.consume("Expected newline or EOF after value.", TokenType.NEWLINE, TokenType.EOF)
@@ -65,7 +83,7 @@ class Parser:
         return statements
 
     def assignment(self):
-        expr: Expr = self.equality()
+        expr: Expr = self.logical_or()
 
         if self.match(TokenType.EQUAL):
             equals: Token = self.previous()
@@ -76,6 +94,26 @@ class Parser:
                 return Assign(name, value)
 
             Error.error(equals, "Invalid assignment target.")
+
+        return expr
+
+    def logical_or(self):
+        expr: Expr = self.logical_and()
+
+        while self.match(TokenType.OR):
+            operator: Token = self.previous()
+            right: Expr = self.logical_and()
+            expr = Logical(expr, operator, right)
+
+        return expr
+
+    def logical_and(self):
+        expr: Expr = self.equality()
+
+        while self.match(TokenType.AND):
+            operator: Token = self.previous()
+            right: Expr = self.equality()
+            expr = Logical(expr, operator, right)
 
         return expr
 

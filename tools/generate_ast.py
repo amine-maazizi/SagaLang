@@ -22,7 +22,7 @@ def define_ast(output_dir: str, base_name: str, types: list[str]):
             fields =  type.split("|")[1].strip()
             define_type(f, base_name, class_name, fields)
 
-        define_visitor(f, types)
+        define_visitor(f,base_name, types)
 
 def define_type(f, base_name: str, class_name: str, field_list: list[str]):
     f.write(f'class {class_name}({base_name}):\n')
@@ -41,12 +41,12 @@ def define_type(f, base_name: str, class_name: str, field_list: list[str]):
     f.write(f'  def accept(self, visitor: "Visitor"):\n')
     f.write(f'      return visitor.visit_{class_name.lower()}(self)\n\n')
 
-def define_visitor(f, types: list[str]):
+def define_visitor(f, base_name: str, types: list[str]):
     f.write(f'class Visitor(ABC):\n')
     for type in types:
         type_name = type.split('|')[0].strip()
         f.write(f'  @abstractmethod\n')
-        f.write(f'  def visit_{type_name.lower()}(self, {type_name.lower()}: {type_name}):\n')
+        f.write(f'  def visit_{type_name.lower()}(self, {base_name.lower()}: {type_name}):\n')
         f.write(f'      pass\n')
 
 if __name__ == "__main__":
@@ -56,19 +56,21 @@ if __name__ == "__main__":
     
     output_dir = args[1]
 
-    # define_ast(output_dir, "Expr", [
-    #     "Assign     | name: Token, value: Expr",
-    #     "Binary     | left: Expr, operator: Token, right: Expr",
-    #     "Grouping   | expression: Expr",
-    #     "Literal    | value: any",
-    #     "Ternary    | condition: Expr, then_branch: Expr, else_branch: Expr",
-    #     "Unary      | operator: Token, right: Expr",
-    #     "Variable   | name: Token"
-    # ])
-
-    define_ast(output_dir, "Stmt", [
-        "Block      | statements: list[Stmt]",
-        "Expression | expression: Expr",
-        "Say        | expression: Expr",
-        "Let        | name: Token, initializer: Expr"
+    define_ast(output_dir, "Expr", [
+        "Assign     | name: Token, value: Expr",
+        "Binary     | left: Expr, operator: Token, right: Expr",
+        "Grouping   | expression: Expr",
+        "Literal    | value: any",
+        "Logical    | left: Expr, operator: Token, right: Expr",
+        "Ternary    | condition: Expr, then_branch: Expr, else_branch: Expr",
+        "Unary      | operator: Token, right: Expr",
+        "Variable   | name: Token"
     ])
+
+    # define_ast(output_dir, "Stmt", [
+    #     "Block      | statements: list[Stmt]",
+    #     "Expression | expression: Expr",
+    #     "If         | condition: Expr, then_branch: Stmt, else_branch: Stmt",
+    #     "Say        | expression: Expr",
+    #     "Let        | name: Token, initializer: Expr"
+    # ])

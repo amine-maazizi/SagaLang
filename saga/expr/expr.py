@@ -43,6 +43,16 @@ class Literal(Expr):
   def accept(self, visitor: "Visitor"):
       return visitor.visit_literal(self)
 
+class Logical(Expr):
+  def __init__(self, left: Expr, operator: Token, right: Expr):
+      self.left = left
+      self.operator = operator
+      self.right = right
+
+  @override
+  def accept(self, visitor: "Visitor"):
+      return visitor.visit_logical(self)
+
 class Ternary(Expr):
   def __init__(self, condition: Expr, then_branch: Expr, else_branch: Expr):
       self.condition = condition
@@ -72,23 +82,26 @@ class Variable(Expr):
 
 class Visitor(ABC):
   @abstractmethod
-  def visit_assign(self, assign: Assign):
+  def visit_assign(self, expr: Assign):
       pass
   @abstractmethod
-  def visit_binary(self, binary: Binary):
+  def visit_binary(self, expr: Binary):
       pass
   @abstractmethod
-  def visit_grouping(self, grouping: Grouping):
+  def visit_grouping(self, expr: Grouping):
       pass
   @abstractmethod
-  def visit_literal(self, literal: Literal):
+  def visit_literal(self, expr: Literal):
       pass
   @abstractmethod
-  def visit_ternary(self, ternary: Ternary):
+  def visit_logical(self, expr: Logical):
       pass
   @abstractmethod
-  def visit_unary(self, unary: Unary):
+  def visit_ternary(self, expr: Ternary):
       pass
   @abstractmethod
-  def visit_variable(self, variable: Variable):
+  def visit_unary(self, expr: Unary):
+      pass
+  @abstractmethod
+  def visit_variable(self, expr: Variable):
       pass

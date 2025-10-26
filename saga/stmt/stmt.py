@@ -26,6 +26,16 @@ class Expression(Stmt):
   def accept(self, visitor: "Visitor"):
       return visitor.visit_expression(self)
 
+class If(Stmt):
+  def __init__(self, condition: Expr, then_branch: Stmt, else_branch: Stmt):
+      self.condition = condition
+      self.then_branch = then_branch
+      self.else_branch = else_branch
+
+  @override
+  def accept(self, visitor: "Visitor"):
+      return visitor.visit_if(self)
+
 class Say(Stmt):
   def __init__(self, expression: Expr):
       self.expression = expression
@@ -45,14 +55,17 @@ class Let(Stmt):
 
 class Visitor(ABC):
   @abstractmethod
-  def visit_block(self, block: Block):
+  def visit_block(self, stmt: Block):
       pass
   @abstractmethod
-  def visit_expression(self, expression: Expression):
+  def visit_expression(self, stmt: Expression):
       pass
   @abstractmethod
-  def visit_say(self, say: Say):
+  def visit_if(self, stmt: If):
       pass
   @abstractmethod
-  def visit_let(self, let: Let):
+  def visit_say(self, stmt: Say):
+      pass
+  @abstractmethod
+  def visit_let(self, stmt: Let):
       pass

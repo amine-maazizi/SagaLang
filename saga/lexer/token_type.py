@@ -56,6 +56,8 @@ class TokenType(Enum):
     FN = 'fun'
     IF = 'if'
     ELSE = 'else'
+    AND = 'and'
+    OR = 'or'
     WHILE = 'while'
     FOR = 'for'
     RETURN = 'return'

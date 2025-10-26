@@ -4,7 +4,7 @@ import expr.expr as expr
 from expr.expr import Expr, Grouping, Binary, Unary, Ternary, Literal
 
 import stmt.stmt as stmt
-from stmt.stmt import Stmt, Expression, Say, Let
+from stmt.stmt import Stmt, Expression, Say, Let, If
 
 from lexer.token_type import TokenType
 from lexer.token import Token
@@ -49,6 +49,18 @@ class Interpreter(expr.Visitor, stmt.Visitor):
     def visit_literal(self, literal: Literal):
         return literal.value
     
+    @override
+    def visit_logical(self, expr):
+        left: any = self.evaluate(expr.left)
+
+        # Short-circuiting
+        if expr.operator.type == TokenType.OR:
+            if self.is_truthful(left): return left
+        else:    
+            if not self.is_truthful(left): return left
+        
+        return self.evaluate(expr.right)
+
     @override
     def visit_grouping(self, grouping: Grouping):
         return self.evaluate(grouping.expression)
@@ -143,6 +155,14 @@ class Interpreter(expr.Visitor, stmt.Visitor):
         self.evaluate(expression.expression)
         return None
     
+    @override
+    def visit_if(self, stmt: If):
+        if self.is_truthful(self.evaluate(stmt.condition)):
+            self.execute_block(stmt.then_branch.statements, self.env)
+        elif stmt.else_branch != None:
+            self.execute_block(stmt.else_branch.statements, self.env)
+        return None
+
     @override
     def visit_say(self, say: Say):
         value: any = self.evaluate(say.expression)

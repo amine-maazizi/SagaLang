@@ -1,0 +1,21 @@
+let player_health = 100
+let has_potion = false
+let in_safe_zone = false
+
+if player_health > 0:
+    // Check if player can heal: low health AND has potion
+    if player_health < 30 and has_potion:
+        player_health = 75
+        has_potion = false
+        say "You used a potion! Health restored. Current HP: " + player_health
+    
+    // Check if player is hurt but safe OR still carrying a potion
+    if player_health < 50 or in_safe_zone:
+        say "You take a breather and plan your next move."
+    
+    // If player is healthy AND not in a safe zone
+    if player_health >= 50 and !in_safe_zone:
+        say "You feel strong and ready for battle!"
+else:
+    say "Player has been defeated!"
+    say "Game Over"

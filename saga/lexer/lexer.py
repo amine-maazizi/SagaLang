@@ -18,6 +18,8 @@ class Lexer:
         self.keywords = {
             "if": TokenType.IF,
             "else": TokenType.ELSE,
+            "and": TokenType.AND,
+            "or": TokenType.OR,
             "while": TokenType.WHILE,
             "for": TokenType.FOR,
             "return": TokenType.RETURN,
@@ -51,95 +53,84 @@ class Lexer:
         ))
 
         return self.tokens
-    
+
     def is_at_end(self) -> bool:
         """Checks if the lexer has reached the end of the source file"""
         return self.current >= len(self.source)
 
     def lex_token(self):
-        c = self.advance()
-
-        if self.at_line_start and c == ' ':
-            self.current -= 1  # Put back the space
-            self.column -= 1
+        # Handle indentation at the start of every line
+        if self.at_line_start:
             self.handle_indentation()
             self.at_line_start = False
-            return
-        
-        if c not in (' ', '\t', '\r'):
-            self.at_line_start = False
+            # After handling indentation, check if we're at end
+            if self.is_at_end():
+                return
+            self.start = self.current
+
+        c = self.advance()
+
+        # Mark line as having content for any non-whitespace character
+        if c not in (' ', '\t', '\r', '\n'):
+            self.line_has_content = True
 
         match c:
             case '(':
-                self.line_has_content = True
                 self.add_token(TokenType.LEFT_PAREN)
             case ')':
-                self.line_has_content = True
                 self.add_token(TokenType.RIGHT_PAREN)
             case '{':
-                self.line_has_content = True
                 self.add_token(TokenType.LEFT_BRACE)
             case '}':
-                self.line_has_content = True
                 self.add_token(TokenType.RIGHT_BRACE)
             case ',':
-                self.line_has_content = True
                 self.add_token(TokenType.COMMA)
             case '.':
-                self.line_has_content = True
                 if self.match('.'):
                     self.add_token(TokenType.RANGE)
                 else:
                     self.add_token(TokenType.DOT)
             case '-':
-                self.line_has_content = True
                 self.add_token(TokenType.MINUS)
             case '+':
-                self.line_has_content = True
                 self.add_token(TokenType.PLUS)
             case '/':
                 if self.match('/'):
                     # Single-line comment - don't mark as content
+                    self.line_has_content = False
                     while self.peek() != '\n' and not self.is_at_end():
                         self.advance()
                 elif self.match('*'):
                     # Block comment - don't mark as content
+                    self.line_has_content = False
                     self.block_comment()
                 else:
-                    self.line_has_content = True
                     self.add_token(TokenType.SLASH)
             case '*':
-                self.line_has_content = True
                 self.add_token(TokenType.STAR)
             case  ':':
-                self.line_has_content = True
                 self.add_token(TokenType.COLON)
             case '<':
-                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.LESS_EQUAL)
                 else:
                     self.add_token(TokenType.LESS)
             case '>':
-                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.GREATER_EQUAL)
                 else:
                     self.add_token(TokenType.GREATER)
             case '=':
-                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.EQUAL_EQUAL)
                 else:
                     self.add_token(TokenType.EQUAL)
             case '!':
-                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.BANG_EQUAL)
                 else:
                     self.add_token(TokenType.BANG)
             case '?':
-                self.line_has_content = True
                 self.add_token(TokenType.QUESTION)
             case '\t' | '\r' | ' ':
                 pass  # Ignore whitespace
@@ -152,14 +143,11 @@ class Lexer:
                 self.at_line_start = True
                 self.line_has_content = False  # Reset for next line
             case '"':
-                self.line_has_content = True
                 self.string()
             case _:
                 if c.isdigit():
-                    self.line_has_content = True
                     self.number()
                 elif c.isalpha():
-                    self.line_has_content = True
                     self.identifier()
                 else:
                     Error.report(self.line, self.column, "Unexpected character")
@@ -286,16 +274,20 @@ class Lexer:
             self.advance()
             local_indentation_level += 1
 
+        # Skip if this is a blank line (only whitespace before newline/EOF)
+        if self.peek() == '\n' or self.is_at_end():
+            return
+
         local_indentation_level = local_indentation_level // 4
 
         if local_indentation_level > self.indentation_level:
             # Only indent by one level at a time
             self.indentation_level = local_indentation_level
-            self.line_has_content = True  # Indentation counts as content
+            self.line_has_content = True
             self.add_token(TokenType.INDENT)
         elif local_indentation_level < self.indentation_level:
-            # Need to emit multiple DEDENTs if we jump multiple levels
+            # Emit multiple DEDENTs if we jump multiple levels
             while self.indentation_level > local_indentation_level:
-                self.line_has_content = True  # Dedentation counts as content
+                self.line_has_content = True
                 self.add_token(TokenType.DEDENT)
                 self.indentation_level -= 1
