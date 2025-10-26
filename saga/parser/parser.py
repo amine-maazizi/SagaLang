@@ -35,6 +35,7 @@ class Parser:
         return Let(name, initializer)
 
     def statement(self) -> Stmt:
+        if self.match(TokenType.FOR): return self.for_statement()
         if self.match(TokenType.IF): return self.if_statement()
         if self.match(TokenType.SAY): return self.say_statement()
         if self.match(TokenType.WHILE): return self.while_statement()
@@ -42,6 +43,65 @@ class Parser:
 
         return self.expression_statement()
     
+    def for_statement(self):
+        # for i in 1..10:
+        loop_var: Token = self.consume("Expected variable name after 'for'.", TokenType.IDENTIFIER)
+        self.consume("Expected 'in' after loop variable.", TokenType.IN)
+        iterable: Expr = self.expression()  # Parse range like 1..10
+        self.consume("Expected ':' after iterable.", TokenType.COLON)
+        self.consume("Expected newline after ':'.", TokenType.NEWLINE)
+        
+        body: Stmt = self.statement()
+        
+        # Desugar: for i in start..end  =>
+        # {
+        #   let i = start
+        #   while i <= end:
+        #       body
+        #       i = i + 1
+        # }
+        
+        # Assuming iterable is a Binary expression with RANGE operator
+        if isinstance(iterable, Binary) and iterable.operator.type == TokenType.RANGE:
+            start = iterable.left
+            end = iterable.right
+            
+            # Create: let i = start
+            initializer = Let(loop_var, start)
+            
+            # Create: i <= end
+            condition = Binary(
+                Variable(loop_var),
+                Token(TokenType.LESS_EQUAL, "<=", None, loop_var.line, loop_var.column),
+                end
+            )
+            
+            # Create: i = i + 1
+            increment = Expression(
+                Assign(
+                    loop_var,
+                    Binary(
+                        Variable(loop_var),
+                        Token(TokenType.PLUS, "+", None, loop_var.line, loop_var.column),
+                        Literal(1)
+                    )
+                )
+            )
+            
+            # Create the while body: original body + increment
+            while_body = Block([body, increment]) if isinstance(body, Block) else Block([body, increment])
+            
+            # Create the while loop
+            while_stmt = While(condition, while_body)
+            
+            # Wrap everything in a block
+            return Block([initializer, while_stmt])
+        
+        else:
+            # Handle other iterables later
+            Error.error(loop_var, "For loop currently only supports range expressions.")
+            raise ParseError()
+
     def while_statement(self):
         condition: Expr = self.expression()
         self.consume("Expected ':' after condition.", TokenType.COLON)
@@ -183,21 +243,31 @@ class Parser:
              TokenType.LESS, TokenType.LESS_EQUAL):
             operator: Token = self.previous()
             self.error(operator, f"Binary operator '{operator.lexeme}' cannot appear at the beginning of an expression.")
-            self.term()  
+            self.range_expr() 
             raise ParseError()
 
-        expr: Expr = self.term()
+        expr: Expr = self.range_expr()
 
         while (self.match(
             TokenType.GREATER, TokenType.GREATER_EQUAL,
             TokenType.LESS, TokenType.LESS_EQUAL
         )):
             operator: Token = self.previous()
-            right: Expr = self.term()
+            right: Expr = self.range_expr()
             expr = Binary(expr, operator, right)
         
         return expr
     
+    def range_expr(self):
+        expr: Expr = self.term()
+
+        while self.match(TokenType.RANGE):
+            operator: Token = self.previous()
+            right: Expr = self.term()
+            expr = Binary(expr, operator, right)
+        
+        return expr
+
     def term(self):
         if self.match(TokenType.PLUS):
             operator: Token = self.previous()
