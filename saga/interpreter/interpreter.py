@@ -156,6 +156,12 @@ class Interpreter(expr.Visitor, stmt.Visitor):
         return None
     
     @override
+    def visit_while(self, stmt):
+        while self.is_truthful(self.evaluate(stmt.condition)):
+            self.execute(stmt.body)
+        return None
+
+    @override
     def visit_if(self, stmt: If):
         if self.is_truthful(self.evaluate(stmt.condition)):
             self.execute_block(stmt.then_branch.statements, self.env)

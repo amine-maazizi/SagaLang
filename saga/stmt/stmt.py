@@ -53,6 +53,15 @@ class Let(Stmt):
   def accept(self, visitor: "Visitor"):
       return visitor.visit_let(self)
 
+class While(Stmt):
+  def __init__(self, condition: Expr, body: Stmt):
+      self.condition = condition
+      self.body = body
+
+  @override
+  def accept(self, visitor: "Visitor"):
+      return visitor.visit_while(self)
+
 class Visitor(ABC):
   @abstractmethod
   def visit_block(self, stmt: Block):
@@ -68,4 +77,7 @@ class Visitor(ABC):
       pass
   @abstractmethod
   def visit_let(self, stmt: Let):
+      pass
+  @abstractmethod
+  def visit_while(self, stmt: While):
       pass

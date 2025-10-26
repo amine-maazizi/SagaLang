@@ -1,7 +1,7 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
 from expr.expr import Expr, Assign, Binary, Unary, Literal, Grouping, Logical, Ternary, Variable
-from stmt.stmt import Stmt, Block, Expression, Say, Let, If
+from stmt.stmt import Stmt, Block, Expression, Say, Let, If, While
 from errors.errors import Error, ParseError
 
 class Parser:
@@ -37,10 +37,19 @@ class Parser:
     def statement(self) -> Stmt:
         if self.match(TokenType.IF): return self.if_statement()
         if self.match(TokenType.SAY): return self.say_statement()
+        if self.match(TokenType.WHILE): return self.while_statement()
         if self.match(TokenType.INDENT): return Block(self.block())
 
         return self.expression_statement()
     
+    def while_statement(self):
+        condition: Expr = self.expression()
+        self.consume("Expected ':' after condition.", TokenType.COLON)
+        self.consume("Expected newline after ':'.", TokenType.NEWLINE)
+        body: Stmt = self.statement()
+
+        return While(condition, body)
+
     def if_statement(self):
         condition: Expr = self.expression()
         self.consume("Expected ':' after condition.", TokenType.COLON)
