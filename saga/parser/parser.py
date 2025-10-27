@@ -1,6 +1,6 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
-from expr.expr import Expr, Assign, Binary, Unary, Literal, Grouping, Logical, Ternary, Variable
+from expr.expr import Expr, Assign, Binary, Call, Unary, Literal, Grouping, Logical, Ternary, Variable
 from stmt.stmt import Stmt, Block, Expression, Say, Let, If, While, Continue, Break
 from errors.errors import Error, ParseError
 
@@ -321,8 +321,35 @@ class Parser:
             operator: Token = self.previous()
             return  Unary(operator, self.primary())
         
-        return self.primary() 
+        return self.call()
     
+    def call(self):
+        expr: Expr = self.primary()
+
+        while True:
+            if self.match(TokenType.LEFT_PAREN):
+                expr = self.finish_call(expr)
+            else:
+                break
+
+        return expr
+
+    def finish_call(self, callee: Expr):
+        arguments: list[Expr] = []
+        
+        if not self.check(TokenType.RIGHT_PAREN):
+            arguments.append(self.expression())
+            while self.match(TokenType.COMMA):
+                # We'll go with Java arg limitation to simplify our future bytecode interpreter
+                if (len(arguments) >= 254):  
+                    # We don't throw an error to not kick into panic mode (since technically the parser is in a valid state still)
+                    Error.error(self.peek(), "Can't have more than 255 arguments.")
+                arguments.append(self.expression())
+        
+        paren: Token = self.consume("Expected ')' after arguments.", TokenType.RIGHT_PAREN)
+
+        return Call(callee, paren, arguments)
+
     def primary(self):
         if self.match(TokenType.FALSE): return Literal(False)
         if self.match(TokenType.TRUE):  return Literal(True)

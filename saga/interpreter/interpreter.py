@@ -1,5 +1,17 @@
 from typing import override
 
+from callables.saga_callable import SAGACallable
+from callables.native_callables import (
+    ClockCallable,
+    RandomCallable,
+    RandomIntCallable,
+    InputCallable,
+    ReadFileCallable,
+    WriteFileCallable,
+    AppendFileCallable,
+    FileExistsCallable,
+    DeleteFileCallable
+)
 import expr.expr as expr
 from expr.expr import Expr, Grouping, Binary, Unary, Ternary, Literal
 
@@ -18,7 +30,19 @@ from environment.environment import Environment
 class Interpreter(expr.Visitor, stmt.Visitor):
 
     def __init__(self):
-        self.env = Environment()
+        self.globals = Environment()
+        self.env = self.globals
+
+        # define native functions
+        self.globals.define("clock", ClockCallable())
+        self.globals.define("random", RandomCallable())
+        self.globals.define("random_int", RandomIntCallable())
+        self.globals.define("input", InputCallable())
+        self.globals.define("read_file", ReadFileCallable())
+        self.globals.define("write_file", WriteFileCallable())
+        self.globals.define("append_file", AppendFileCallable())
+        self.globals.define("file_exists", FileExistsCallable())
+        self.globals.define("delete_file", DeleteFileCallable())
 
     def interpret(self, statements: list[Stmt]):
         try:
@@ -130,6 +154,24 @@ class Interpreter(expr.Visitor, stmt.Visitor):
         
         # unreachable
         return None
+    
+    @override
+    def visit_call(self, expr):
+        callee: any = self.evaluate(expr.callee)
+        if not isinstance(callee, SAGACallable):
+            raise RuntimeError(expr.paren, "Can only call functions or classes.")
+
+        arguments: list[any] = []
+        for arg in expr.arguments:
+            arguments.append(self.evaluate(arg))
+        
+        function: SAGACallable = callee
+        
+        # Handle variadic functions (arity -1) differently
+        if function.arity() != -1 and len(arguments) != function.arity():
+            raise RuntimeError(expr.paren, f"Expected {function.arity()} arguments but got {len(arguments)}.")
+
+        return function.call(self, arguments)
     
     @override
     def visit_ternary(self, ternary: Ternary):
