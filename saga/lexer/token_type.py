@@ -53,7 +53,7 @@ class TokenType(Enum):
     # control flow
     IMPORT = 'import'
     LET = 'let'
-    FN = 'fun'
+    FUN = 'fun'
     IF = 'if'
     ELSE = 'else'
     AND = 'and'

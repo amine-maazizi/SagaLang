@@ -1,7 +1,7 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
 from expr.expr import Expr, Assign, Binary, Call, Unary, Literal, Grouping, Logical, Ternary, Variable
-from stmt.stmt import Stmt, Block, Expression, Say, Let, If, While, Continue, Break
+from stmt.stmt import Stmt, Block, Expression, Say, Let, If, While, Continue, Break, Function
 from errors.errors import Error, ParseError
 
 class Parser:
@@ -18,6 +18,7 @@ class Parser:
     
     def declaration(self):
         try:
+            if self.match(TokenType.FUN): return self.function("function")
             if self.match(TokenType.LET): return self.var_declaration()
             return self.statement()
         except ParseError as error:
@@ -146,6 +147,27 @@ class Parser:
         expr: Expr = self.expression()
         self.consume("Expected newline or EOF after value.", TokenType.NEWLINE, TokenType.EOF)
         return Expression(expr)
+
+    def function(self, kind: str):
+        name: Token = self.consume(f"Expected {kind} name.", TokenType.IDENTIFIER)
+        self.consume(f"Expected '(' after {kind} name.", TokenType.LEFT_PAREN)
+        params: list[Token] = []
+        
+        if not self.check(TokenType.RIGHT_PAREN):
+            params.append(self.consume("Expected parameter name.", TokenType.IDENTIFIER))
+            while self.match(TokenType.COMMA):
+                if (len(params) >= 254):
+                    Error.error(self.peek(), "Can't have more than 255 arguments.")
+                params.append(self.consume("Expected parameter name.", TokenType.IDENTIFIER))
+
+        self.consume(f"Expected ')' after {kind} name.", TokenType.RIGHT_PAREN)
+
+        self.consume(f"Expected ':' before {kind} body.", TokenType.COLON)
+        self.consume(f"Expected newline before {kind} body.", TokenType.NEWLINE)
+        self.consume(f"Expected indentation before {kind} body.", TokenType.INDENT)
+
+        body: list[Stmt] = self.block()
+        return Function(name, params, body)
 
     def block(self):
         statements: list[Stmt] = []
@@ -416,7 +438,7 @@ class Parser:
 
             if self.peek().type in {
             TokenType.LET,
-            TokenType.FN,
+            TokenType.FUN,
             TokenType.IF,
             TokenType.FOR,
             TokenType.WHILE,

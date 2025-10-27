@@ -1,6 +1,6 @@
 from typing import override
 
-from callables.saga_callable import SAGACallable
+from callables.saga_callable import SAGACallable, SAGAFunction
 from callables.native_callables import (
     ClockCallable,
     RandomCallable,
@@ -196,6 +196,12 @@ class Interpreter(expr.Visitor, stmt.Visitor):
     def visit_expression(self, expression):
         self.evaluate(expression.expression)
         return None
+
+    @override
+    def visit_function(self, stmt):
+        func: SAGAFunction = SAGAFunction(stmt)
+        self.env.define(stmt.name.lexeme, func)
+        return None
     
     @override
     def visit_break(self, stmt: Break):
@@ -204,7 +210,7 @@ class Interpreter(expr.Visitor, stmt.Visitor):
     @override
     def visit_continue(self, stmt: Continue):
         raise ContinueException()
-    
+
     @override
     def visit_while(self, stmt):
         try:

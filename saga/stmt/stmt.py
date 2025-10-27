@@ -26,6 +26,16 @@ class Expression(Stmt):
   def accept(self, visitor: "Visitor"):
       return visitor.visit_expression(self)
 
+class Function(Stmt):
+  def __init__(self, name: Token, params: list[Token], body: list[Stmt]):
+      self.name = name
+      self.params = params
+      self.body = body
+
+  @override
+  def accept(self, visitor: "Visitor"):
+      return visitor.visit_function(self)
+
 class If(Stmt):
   def __init__(self, condition: Expr, then_branch: Stmt, else_branch: Stmt):
       self.condition = condition
@@ -82,6 +92,9 @@ class Visitor(ABC):
       pass
   @abstractmethod
   def visit_expression(self, stmt: Expression):
+      pass
+  @abstractmethod
+  def visit_function(self, stmt: Function):
       pass
   @abstractmethod
   def visit_if(self, stmt: If):
