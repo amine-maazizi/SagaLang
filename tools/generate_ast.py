@@ -85,6 +85,7 @@ if __name__ == "__main__":
         "Function   | name: Token, params: list[Token], body: list[Stmt]",
         "If         | condition: Expr, then_branch: Stmt, else_branch: Stmt",
         "Say        | expression: Expr",
+        "Return     | keyword: Token, value: Expr",
         "Let        | name: Token, initializer: Expr",
         "While      | condition: Expr, body: Stmt",
         "Break",

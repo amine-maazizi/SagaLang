@@ -21,7 +21,7 @@ from stmt.stmt import Stmt, Expression, Say, Let, If, Break, Continue
 from lexer.token_type import TokenType
 from lexer.token import Token
 
-from errors.errors import RuntimeError, Error, ContinueException, BreakException
+from errors.errors import RuntimeError, Error, ContinueException, BreakException, ReturnException
 
 from environment.environment import Environment
 
@@ -239,6 +239,13 @@ class Interpreter(expr.Visitor, stmt.Visitor):
         print(value)
         return None
     
+    @override
+    def visit_return(self, stmt):
+        value: any = None
+        if stmt.value is not None: value = self.evaluate(stmt.value)
+
+        raise ReturnException(value)
+
     @override
     def visit_let(self, let: Let):
         value: any = None

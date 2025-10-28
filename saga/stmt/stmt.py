@@ -54,6 +54,15 @@ class Say(Stmt):
   def accept(self, visitor: "Visitor"):
       return visitor.visit_say(self)
 
+class Return(Stmt):
+  def __init__(self, keyword: Token, value: Expr):
+      self.keyword = keyword
+      self.value = value
+
+  @override
+  def accept(self, visitor: "Visitor"):
+      return visitor.visit_return(self)
+
 class Let(Stmt):
   def __init__(self, name: Token, initializer: Expr):
       self.name = name
@@ -101,6 +110,9 @@ class Visitor(ABC):
       pass
   @abstractmethod
   def visit_say(self, stmt: Say):
+      pass
+  @abstractmethod
+  def visit_return(self, stmt: Return):
       pass
   @abstractmethod
   def visit_let(self, stmt: Let):

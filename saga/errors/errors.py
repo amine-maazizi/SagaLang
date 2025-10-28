@@ -38,3 +38,8 @@ class BreakException(Exception):
 
 class ContinueException(Exception):
     pass
+
+class ReturnException(Exception):
+    def __init__(self, value: any, *args):
+        super().__init__(*args)
+        self.value = value

@@ -1,7 +1,7 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
 from expr.expr import Expr, Assign, Binary, Call, Unary, Literal, Grouping, Logical, Ternary, Variable
-from stmt.stmt import Stmt, Block, Expression, Say, Let, If, While, Continue, Break, Function
+from stmt.stmt import Stmt, Block, Expression, Say, Return, Let, If, While, Continue, Break, Function
 from errors.errors import Error, ParseError
 
 class Parser:
@@ -39,6 +39,7 @@ class Parser:
         if self.match(TokenType.FOR): return self.for_statement()
         if self.match(TokenType.IF): return self.if_statement()
         if self.match(TokenType.SAY): return self.say_statement()
+        if self.match(TokenType.RETURN): return self.return_statement()
         if self.match(TokenType.WHILE): return self.while_statement()
         if self.match(TokenType.BREAK): return self.break_statement()
         if self.match(TokenType.CONTINUE): return self.continue_statement()
@@ -142,6 +143,17 @@ class Parser:
         value: Expr = self.expression()
         self.consume("Expected newline or EOF after value.", TokenType.NEWLINE, TokenType.EOF)
         return Say(value)
+
+    def return_statement(self):
+        keyword: Token = self.previous()
+        value: Expr = None
+        
+        # We check if the return expression is absent rather than present
+        if not self.check(TokenType.NEWLINE) and not self.check(TokenType.EOF):
+            value = self.expression()
+        
+        self.consume("Expected newline or EOF after value.", TokenType.NEWLINE, TokenType.EOF)
+        return Return(keyword, value)
 
     def expression_statement(self):
         expr: Expr = self.expression()
