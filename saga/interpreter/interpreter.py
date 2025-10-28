@@ -199,7 +199,9 @@ class Interpreter(expr.Visitor, stmt.Visitor):
 
     @override
     def visit_function(self, stmt):
-        func: SAGAFunction = SAGAFunction(stmt)
+        # We pass the environment that is active when 
+        # the function is declared not when it's called
+        func: SAGAFunction = SAGAFunction(stmt, self.env)
         self.env.define(stmt.name.lexeme, func)
         return None
     

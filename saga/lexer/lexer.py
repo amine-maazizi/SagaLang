@@ -72,70 +72,81 @@ class Lexer:
 
         c = self.advance()
 
-        # Mark line as having content for any non-whitespace character
-        if c not in (' ', '\t', '\r', '\n'):
-            self.line_has_content = True
-
         match c:
             case '(':
+                self.line_has_content = True
                 self.add_token(TokenType.LEFT_PAREN)
             case ')':
+                self.line_has_content = True
                 self.add_token(TokenType.RIGHT_PAREN)
             case '{':
+                self.line_has_content = True
                 self.add_token(TokenType.LEFT_BRACE)
             case '}':
+                self.line_has_content = True
                 self.add_token(TokenType.RIGHT_BRACE)
             case ',':
+                self.line_has_content = True
                 self.add_token(TokenType.COMMA)
             case '.':
+                self.line_has_content = True
                 if self.match('.'):
                     self.add_token(TokenType.RANGE)
                 else:
                     self.add_token(TokenType.DOT)
             case '-':
+                self.line_has_content = True
                 self.add_token(TokenType.MINUS)
             case '+':
+                self.line_has_content = True
                 self.add_token(TokenType.PLUS)
             case '/':
                 if self.match('/'):
                     # Single-line comment - don't mark as content
-                    self.line_has_content = False
                     while self.peek() != '\n' and not self.is_at_end():
                         self.advance()
                 elif self.match('*'):
                     # Block comment - don't mark as content
-                    self.line_has_content = False
                     self.block_comment()
                 else:
+                    # Division operator - this IS content
+                    self.line_has_content = True
                     self.add_token(TokenType.SLASH)
             case '*':
+                self.line_has_content = True
                 self.add_token(TokenType.STAR)
             case  ':':
+                self.line_has_content = True
                 self.add_token(TokenType.COLON)
             case '<':
+                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.LESS_EQUAL)
                 else:
                     self.add_token(TokenType.LESS)
             case '>':
+                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.GREATER_EQUAL)
                 else:
                     self.add_token(TokenType.GREATER)
             case '=':
+                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.EQUAL_EQUAL)
                 else:
                     self.add_token(TokenType.EQUAL)
             case '!':
+                self.line_has_content = True
                 if self.match('='):
                     self.add_token(TokenType.BANG_EQUAL)
                 else:
                     self.add_token(TokenType.BANG)
             case '?':
+                self.line_has_content = True
                 self.add_token(TokenType.QUESTION)
             case '\t' | '\r' | ' ':
-                pass  # Ignore whitespace
+                pass  # Ignore whitespace - don't mark as content
             case '\n':
                 # Only emit NEWLINE if the line had actual content
                 if self.line_has_content:
@@ -145,15 +156,19 @@ class Lexer:
                 self.at_line_start = True
                 self.line_has_content = False  # Reset for next line
             case '"':
+                self.line_has_content = True
                 self.string()
             case _:
                 if c.isdigit():
+                    self.line_has_content = True
                     self.number()
                 elif c.isalpha():
+                    self.line_has_content = True
                     self.identifier()
                 else:
+                    self.line_has_content = True
                     Error.report(self.line, self.column, "Unexpected character")
-    
+        
     def advance(self):
         """Advances the lexer and returns the next character"""
         self.current += 1
