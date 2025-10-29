@@ -33,10 +33,10 @@ Saga is a clean, readable interpreted language featuring lexical scoping, first-
 ## Quick Start
 
 ```bash# Run a Saga program
-python saga.py examples/game.saga
+python saga/cmd/main.py examples/game.saga
 
 # Interactive REPL
-python saga.py
+python saga/cmd/main.py
 ```
 
 ### Hello World
