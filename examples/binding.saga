@@ -1,0 +1,8 @@
+let a = "global"
+
+    fun show_a():
+        say a 
+    
+    show_a()
+    a = "block"
+    show_a()

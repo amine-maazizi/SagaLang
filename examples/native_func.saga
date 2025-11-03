@@ -1,0 +1,63 @@
+say "=== Testing Native Functions ==="
+
+say "\n--- Clock ---"
+let start = clock()
+say "Current timestamp: " + start
+
+say "\n--- Random ---"
+say "Random float (0-1): " + random()
+say "Random float (0-1): " + random()
+say "Random int (1-10): " + random_int(1, 10)
+say "Random int (1-10): " + random_int(1, 10)
+say "Random int (100-200): " + random_int(100, 200)
+
+say "\n--- File Operations ---"
+let filename = "test_output.txt"
+
+say "Writing to file..."
+write_file(filename, "Hello from SAGA!\n")
+say "File written successfully"
+
+say "Checking if file exists..."
+if file_exists(filename):
+    say "File exists: " + filename
+
+say "Reading file..."
+let content = read_file(filename)
+say "File content: " + content
+
+say "Appending to file..."
+append_file(filename, "Second line added!\n")
+append_file(filename, "Third line added!\n")
+
+say "Reading updated file..."
+let updated_content = read_file(filename)
+say "Updated content:\n" + updated_content
+
+say "Deleting file..."
+delete_file(filename)
+say "File deleted"
+
+say "Checking if file still exists..."
+if file_exists(filename):
+    say "File still exists"
+else:
+    say "File no longer exists"
+
+say "\n--- User Input ---"
+say "Testing input function..."
+let name = input("Enter your name: ")
+say "Hello, " + name + "!"
+
+let age = input("Enter your age: ")
+say "You are " + age + " years old"
+
+say "\n--- Performance Test ---"
+let start_time = clock()
+for i in 0..1000:
+    let x = random()
+let end_time = clock()
+let elapsed = end_time - start_time
+say "Generated 1000 random numbers in " + elapsed + " seconds"
+
+say "\n=== All tests completed ==="

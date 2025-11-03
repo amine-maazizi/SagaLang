@@ -17,15 +17,15 @@ Saga is a clean, readable interpreted language featuring lexical scoping, first-
 - ✅ Statement execution (declarations, assignments, blocks)
 - ✅ Control flow (if/else, while, for loops with break)
 - ✅ First-class functions with closures
-- ✅ Object-oriented programming (classes, inheritance, this)
 - ✅ Native functions (clock, random, file I/O, user input)
+- ✅ Visual Studio Code extension with language support and syntax highlighting 
 
 ### In Development
 
+- 🚧 Object-oriented programming (classes, inheritance, this)
 - 🚧 Standard library for 2D rendering and real-time graphics
 - 🚧 Neural code completion using pretrained transformer models
-- 🚧 Visual Studio Code extension with:
-  - Syntax highlighting
+- 🚧 Extend the VS Code extension with:
   - Code snippets
   - Language server support
   - Debugging capabilities

@@ -1,0 +1,19 @@
+// fun fib(n):
+//     if n <= 1:
+//         return n
+//     return fib(n-2) + fib(n-1)
+
+
+// for i in 0..20:
+//     say fib(i)
+
+fun make_counter():
+    let i = 0
+    fun count():
+        i = i + 1
+        say i
+    return count
+
+let counter = make_counter()
+counter()  // 1
+counter()   // 2

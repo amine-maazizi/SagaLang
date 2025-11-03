@@ -1,0 +1,31 @@
+let player_health = 50
+let has_potion = true
+
+// Simulate battle loop
+while player_health > 0:
+    say "An enemy attacks!"
+    player_health = player_health - 20
+
+    if player_health <= 25 and has_potion:
+        say "You use a potion to recover!"
+        player_health = 75
+        has_potion = false
+    else:
+        say "Current HP: " + player_health
+
+    if player_health <= 0 or !has_potion and player_health <= 25:
+        say "You are defeated!"
+
+say " "
+
+// Example of a range-based for loop
+for i in 1..5:
+    say "Turn " + i
+    player_health = player_health - 5
+    if player_health <= 0:
+        say "You are defeated during turn " + i
+        break
+    else:
+        say "Current HP after turn " + i + ": " + player_health
+
+say "Battle ended."
