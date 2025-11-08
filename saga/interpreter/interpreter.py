@@ -32,6 +32,7 @@ class Interpreter(expr.Visitor, stmt.Visitor):
     def __init__(self):
         self.globals = Environment()
         self.env = self.globals
+        self.locals = {}
 
         # define native functions
         self.globals.define("clock", ClockCallable())
@@ -53,6 +54,9 @@ class Interpreter(expr.Visitor, stmt.Visitor):
 
     def execute(self, statement: Stmt):
         statement.accept(self)
+
+    def resolve(self, expr: Expr, depth: int):
+        self.locals[expr] = depth
 
     def execute_block(self, statements: list[Stmt], environment: Environment):
         previous: Environment = self.env
@@ -184,12 +188,25 @@ class Interpreter(expr.Visitor, stmt.Visitor):
 
     @override
     def visit_variable(self, variable):
-        return self.env.get(variable.name)
+        return self.look_up_variable(variable.name, variable)
+
+    def look_up_variable(self, name: Token, variable: Expr):
+        distance: int = self.locals.get(variable)
+        if distance is not None:
+            return self.env.get_at(distance, name.lexeme)
+        else:
+            return self.globals.get(name)
 
     @override
     def visit_assign(self, assign):
         value: any = self.evaluate(assign.value)
-        self.env.assign(assign.name, value)
+
+        distance: int = self.locals.get(assign)
+        if distance is not None:
+            self.env.assign_at(distance, assign.name, value)
+        else:
+            self.globals.assign(assign.name, value)
+
         return value
 
     @override

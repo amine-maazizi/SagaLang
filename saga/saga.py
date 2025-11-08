@@ -6,6 +6,7 @@ from interpreter.interpreter import Interpreter
 from errors.errors import Error
 from lexer.token import Token
 from stmt.stmt import Stmt, Expression
+from resolver.resolver import Resolver
 
 
 interpreter = Interpreter()
@@ -40,6 +41,11 @@ def run(source: str, is_repl: bool = False):
     tokens: list[Token] = lex.lex_tokens()
     parser: Parser = Parser(tokens)
     statements: list[Stmt] = parser.parse()
+
+    if Error.had_error: return
+
+    resolver: Resolver = Resolver(interpreter)
+    resolver.resolve(statements)
 
     if Error.had_error: return
 

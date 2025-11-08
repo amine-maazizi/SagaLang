@@ -11,6 +11,15 @@ class Environment:
         # Only define in current scope
         self.values[name] = value
 
+    def ancestor(self, distance: int):
+        env: Environment = self
+        for i in range(distance):
+            env = env.enclosing
+        return env
+
+    def get_at(self, distance: int, name: str):
+        return self.ancestor(distance).values.get(name)    
+
     def get(self, token):
         if token.lexeme in self.values:
             return self.values[token.lexeme]
@@ -19,6 +28,9 @@ class Environment:
             return self.enclosing.get(token)
 
         raise RuntimeError(token, f"Undefined variable '{token.lexeme}'.")
+
+    def assign_at(self, distance: int, name: Token, value: any):
+        self.ancestor(distance).values[name.lexeme] = value
 
     def assign(self, token, value: any):
         if token.lexeme in self.values:
