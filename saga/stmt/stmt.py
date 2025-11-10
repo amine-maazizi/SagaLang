@@ -36,6 +36,15 @@ class Function(Stmt):
   def accept(self, visitor: "Visitor"):
       return visitor.visit_function(self)
 
+class Class(Stmt):
+  def __init__(self, name: Token, methods: list[Function]):
+      self.name = name
+      self.methods = methods
+
+  @override
+  def accept(self, visitor: "Visitor"):
+      return visitor.visit_class(self)
+
 class If(Stmt):
   def __init__(self, condition: Expr, then_branch: Stmt, else_branch: Stmt):
       self.condition = condition
@@ -95,6 +104,13 @@ class Continue(Stmt):
   def accept(self, visitor: "Visitor"):
       return visitor.visit_continue(self)
 
+class Pass(Stmt):
+  def __init__(self):
+      pass
+  @override
+  def accept(self, visitor: "Visitor"):
+      return visitor.visit_pass(self)
+
 class Visitor(ABC):
   @abstractmethod
   def visit_block(self, stmt: Block):
@@ -104,6 +120,9 @@ class Visitor(ABC):
       pass
   @abstractmethod
   def visit_function(self, stmt: Function):
+      pass
+  @abstractmethod
+  def visit_class(self, stmt: Class):
       pass
   @abstractmethod
   def visit_if(self, stmt: If):
@@ -125,4 +144,7 @@ class Visitor(ABC):
       pass
   @abstractmethod
   def visit_continue(self, stmt: Continue):
+      pass
+  @abstractmethod
+  def visit_pass(self, stmt: Pass):
       pass

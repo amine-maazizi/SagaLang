@@ -1,6 +1,6 @@
 from typing import override
 
-from callables.saga_callable import SAGACallable, SAGAFunction
+from callables.saga_callable import SAGACallable, SAGAFunction, SAGAClass, SAGAInstance
 from callables.native_callables import (
     ClockCallable,
     RandomCallable,
@@ -16,7 +16,7 @@ import expr.expr as expr
 from expr.expr import Expr, Grouping, Binary, Unary, Ternary, Literal
 
 import stmt.stmt as stmt
-from stmt.stmt import Stmt, Expression, Say, Let, If, Break, Continue
+from stmt.stmt import Stmt, Expression, Say, Let, If, Break, Continue, Pass
 
 from lexer.token_type import TokenType
 from lexer.token import Token
@@ -72,6 +72,12 @@ class Interpreter(expr.Visitor, stmt.Visitor):
     def visit_block(self, block):
         self.execute_block(block.statements, Environment(self.env))
         return None
+
+    @override
+    def visit_class(self, stmt):
+        self.env.define(stmt.name.lexeme, None)
+        saga_class: SAGAClass = SAGAClass(stmt.name.lexeme)
+        self.env.assign(stmt.name, saga_class) 
 
     @override
     def visit_literal(self, literal: Literal):
@@ -229,6 +235,11 @@ class Interpreter(expr.Visitor, stmt.Visitor):
     @override
     def visit_continue(self, stmt: Continue):
         raise ContinueException()
+
+    @override
+    def visit_pass(self, stmt: Pass):
+        # Pass statement does nothing
+        return None
 
     @override
     def visit_while(self, stmt):

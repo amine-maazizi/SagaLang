@@ -35,7 +35,8 @@ class Lexer:
             "say": TokenType.SAY,
             "class": TokenType.CLASS,
             "this": TokenType.THIS,
-            "super": TokenType.SUPER
+            "super": TokenType.SUPER,
+            "pass": TokenType.PASS
         }
 
     def lex_tokens(self) -> list[Token]:

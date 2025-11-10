@@ -64,6 +64,8 @@ class TokenType(Enum):
     IN = 'in'
     BREAK = 'break'
     CONTINUE = 'continue'
+    PASS = 'pass'
+
 
     # boolean literals
     TRUE = 'true'

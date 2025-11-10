@@ -83,11 +83,13 @@ if __name__ == "__main__":
         "Block      | statements: list[Stmt]",
         "Expression | expression: Expr",
         "Function   | name: Token, params: list[Token], body: list[Stmt]",
+        "Class      | name: Token, methods: list[Function]",
         "If         | condition: Expr, then_branch: Stmt, else_branch: Stmt",
         "Say        | expression: Expr",
         "Return     | keyword: Token, value: Expr",
         "Let        | name: Token, initializer: Expr",
         "While      | condition: Expr, body: Stmt",
         "Break",
-        "Continue"
+        "Continue",
+        "Pass"
     ])

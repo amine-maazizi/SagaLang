@@ -1,7 +1,7 @@
 from lexer.token import Token
 from lexer.token_type import TokenType
 from expr.expr import Expr, Assign, Binary, Call, Unary, Literal, Grouping, Logical, Ternary, Variable
-from stmt.stmt import Stmt, Block, Expression, Say, Return, Let, If, While, Continue, Break, Function
+from stmt.stmt import Stmt, Class, Block, Expression, Say, Return, Let, If, While, Continue, Break, Function, Pass
 from errors.errors import Error, ParseError
 
 class Parser:
@@ -18,12 +18,29 @@ class Parser:
     
     def declaration(self):
         try:
+            if self.match(TokenType.CLASS): return self.class_declaration()
             if self.match(TokenType.FUN): return self.function("function")
             if self.match(TokenType.LET): return self.var_declaration()
             return self.statement()
         except ParseError as error:
             self.synchronize()
             return None
+
+    def class_declaration(self):
+        name: Token = self.consume("Expected class name.", TokenType.IDENTIFIER)
+        self.consume(f"Expected ':' after class name.", TokenType.COLON)
+        self.consume(f"Expected newline after ':'.", TokenType.NEWLINE)
+        self.consume(f"Expected indentation before class body.", TokenType.INDENT)
+
+        methods: list[Function] = []
+        while not self.check(TokenType.DEDENT) and not self.is_at_end():
+            if self.match(TokenType.PASS):
+                self.consume("Expected newline or EOF after 'pass'.", TokenType.NEWLINE, TokenType.EOF)
+                continue
+            methods.append(self.function("method"))
+        
+        self.consume(f"Expected dedentation after class body.", TokenType.DEDENT)
+        return Class(name, methods)
 
     def var_declaration(self):
         name: Token = self.consume("Expected variable name.", TokenType.IDENTIFIER)
@@ -43,6 +60,7 @@ class Parser:
         if self.match(TokenType.WHILE): return self.while_statement()
         if self.match(TokenType.BREAK): return self.break_statement()
         if self.match(TokenType.CONTINUE): return self.continue_statement()
+        if self.match(TokenType.PASS): return self.pass_statement()
         if self.match(TokenType.INDENT): return Block(self.block())
 
         return self.expression_statement()
@@ -54,6 +72,10 @@ class Parser:
     def continue_statement(self):
         self.consume("Expected newline or EOF after 'continue'.", TokenType.NEWLINE, TokenType.EOF)
         return Continue()
+
+    def pass_statement(self):
+        self.consume("Expected newline or EOF after 'pass'.", TokenType.NEWLINE, TokenType.EOF)
+        return Pass()
 
     def for_statement(self):
         # for i in 1..10:
@@ -195,21 +217,6 @@ class Parser:
         
         return statements
 
-    def assignment(self):
-        expr: Expr = self.logical_or()
-
-        if self.match(TokenType.EQUAL):
-            equals: Token = self.previous()
-            value: Expr = self.assignment()
-
-            if isinstance(expr, Variable):
-                name: Token = expr.name
-                return Assign(name, value)
-
-            Error.error(equals, "Invalid assignment target.")
-
-        return expr
-
     def logical_or(self):
         expr: Expr = self.logical_and()
 
@@ -231,26 +238,41 @@ class Parser:
         return expr
 
     def expression(self):
-        return self.assignment()
+        return self.comma()
     
     def comma(self):
         if self.match(TokenType.COMMA):
             operator: Token = self.previous()
             self.error(operator, "Binary operator ',' cannot appear at the beginning of an expression.")
-            self.ternary() 
+            self.assignment() 
             raise ParseError()
 
-        expr: Expr = self.ternary()
+        expr: Expr = self.assignment()
 
         while self.match(TokenType.COMMA):
             operator: Token = self.previous()
-            right: Expr = self.ternary()
+            right: Expr = self.assignment()
             expr = Binary(expr, operator, right)
         
         return expr
 
+    def assignment(self):
+        expr: Expr = self.ternary()
+
+        if self.match(TokenType.EQUAL):
+            equals: Token = self.previous()
+            value: Expr = self.assignment()
+
+            if isinstance(expr, Variable):
+                name: Token = expr.name
+                return Assign(name, value)
+
+            Error.error(equals, "Invalid assignment target.")
+
+        return expr
+
     def ternary(self):
-        expr: Expr = self.equality()
+        expr: Expr = self.logical_or()
 
         if self.match(TokenType.QUESTION):
             # recursivly parse the 'then' branch 

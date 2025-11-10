@@ -40,3 +40,28 @@ class SAGAFunction(SAGACallable):
 
     def __str__(self):
         return f"<fn {self.declaration.name.lexeme}>"
+    
+class SAGAInstance():
+
+    def __init__(self, saga_class):
+        self.saga_class = saga_class
+    
+    def __repr__(self):
+        return self.saga_class.name + " instance"
+
+class SAGAClass(SAGACallable):
+
+    def __init__(self, name: str):
+        self.name = name
+    
+    def __repr__(self):
+        return self.name
+    
+    @override
+    def call(self, interpreter, arguments):
+        instance: SAGAInstance = SAGAInstance(self)
+        return instance
+
+    @override
+    def arity(self):
+        return 0
