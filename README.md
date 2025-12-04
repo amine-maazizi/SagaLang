@@ -309,7 +309,7 @@ fun fibonacci(n):
 
 ## Learning Resources
 
-This project implements concepts from:
+This project extends beyond concepts from:
 
 - [Crafting Interpreters](https://craftinginterpreters.com/) by Robert Nystrom
 
